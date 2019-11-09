@@ -7,12 +7,15 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.functions.BiFunction
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.rxkotlin.withLatestFrom
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 
 interface CheckHealthUseCase {
 
     fun startHealthCheck()
+
+    fun isRunning(): Observable<Boolean>
 
 }
 
@@ -25,8 +28,12 @@ class FelFelCheckHealthUseCase(private val loadTemperatureUseCase: LoadTemperatu
     private val startHealthCheck = PublishSubject.create<Unit>()
     private val startTimer = PublishSubject.create<Unit>()
 
+    private val isEnabled = PublishSubject.create<Boolean>()
+
     init {
         startTimer
+            .withLatestFrom(isEnabled) { _, isEnabled -> isEnabled }
+            .filter { isEnabled -> isEnabled }
             .switchMap {
                 Observable.timer(5, TimeUnit.MINUTES)
             }
@@ -64,6 +71,10 @@ class FelFelCheckHealthUseCase(private val loadTemperatureUseCase: LoadTemperatu
         }
     }
 
-    override fun startHealthCheck() = startHealthCheck.onNext(Unit)
+    override fun startHealthCheck() {
+        isEnabled.onNext(true)
+        startHealthCheck.onNext(Unit)
+    }
+    override fun isRunning(): Observable<Boolean> = isEnabled
 
 }
