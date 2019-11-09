@@ -9,7 +9,7 @@ interface DeviceBandwidthService {
 class FakeDeviceBandwidthService: DeviceBandwidthService {
 
     override fun getTotalBandwidthInBytes(): Long {
-        return Random.nextLong(0, 100)
+        return Random.nextLong(100_000, 1_500_000)
     }
 
 }
